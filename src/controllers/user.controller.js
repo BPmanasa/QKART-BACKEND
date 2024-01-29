@@ -39,9 +39,41 @@ const { userService } = require("../services");
  *
  */
 const getUser = catchAsync(async (req, res) => {
+  const data = await userService.getUserById(req.params.userId);
+
+  if (!data) {
+    throw new ApiError(httpStatus.NOT_FOUND, "User not found");
+  }
+
+  res.status(httpStatus.OK).json(data);
 });
 
 
+const getUserByEmailController = catchAsync(async (req, res) => {
+  console.log('hello world '+ req.params.email);
+  const data = await userService.getUserByEmail(req.params.email);
+  console.log(data);
+  console.log("getUserByEmailController");
+  if(!data){
+    throw new ApiError(httpStatus.NOT_FOUND,"email not found");
+  }
+  res.json(data);
+
+});
+
+
+
+const CreateUserController = catchAsync(async (req,res) => {
+  console.log(req.body)
+  const data = await userService.createUser(req.body);
+  console.log(data);
+  console.log("getUser")
+ 
+  res.json(data);
+})
+
+
+
 module.exports = {
-  getUser,
+  getUser, CreateUserController, getUserByEmailController
 };

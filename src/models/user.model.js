@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+
 // NOTE - "validator" external library and not the custom middleware at src/middlewares/validate.js
 const validator = require("validator");
 const config = require("../config/config");
@@ -12,6 +13,11 @@ const userSchema = mongoose.Schema(
       trim: true,
     },
     email: {
+      type:String,
+      required:true,
+      lowercase:true,
+      unique:true,
+      trim:true,
     },
     password: {
       type: String,
@@ -24,6 +30,10 @@ const userSchema = mongoose.Schema(
       },
     },
     walletMoney: {
+      type:Number,
+      required:true,
+      default:config.default_wallet_money,
+
     },
     address: {
       type: String,
@@ -43,6 +53,9 @@ const userSchema = mongoose.Schema(
  * @returns {Promise<boolean>}
  */
 userSchema.statics.isEmailTaken = async function (email) {
+    const existingUser = await this.findOne({email});
+    return !!existingUser;
+
 };
 
 
@@ -56,3 +69,8 @@ userSchema.statics.isEmailTaken = async function (email) {
 /**
  * @typedef User
  */
+
+const User = mongoose.model("User", userSchema);
+
+module.exports = {User};
+module.exports.User = User;
