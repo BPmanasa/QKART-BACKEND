@@ -13,6 +13,24 @@ const ApiError = require("../utils/ApiError");
  * --- resolve the promise
  */
 const verifyCallback = (req, resolve, reject) => async (err, user, info) => {
+  try{
+
+    if(err || !user){
+      return reject(new ApiError(httpStatus.UNAUTHORIZED,"Please authenticate"))
+    }
+
+    const currentTimeStamp = Math.floor(Date.now()/1000);
+
+    if(user.exp && user.exp < currentTimeStamp){
+      return reject(new ApiError(httpStatus.UNAUTHORIZED, "Token has expired"))
+    }
+
+    req.user = user;
+    resolve();
+  }
+  catch(error){
+    reject(error);
+  }
 };
 
 /**

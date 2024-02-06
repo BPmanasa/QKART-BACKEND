@@ -43,13 +43,19 @@ const { userService } = require("../services");
  *
  */
 const getUser = catchAsync(async (req, res) => {
-  const data = await userService.getUserById(req.params.userId);
+  const {userId} = req.params;
+  const authenticatedUserId = req.user.id;
+  const user = await userService.getUserById(userId);
 
-  if (!data) {
-    throw new ApiError(httpStatus.NOT_FOUND, "User not found");
+  if (!user) {
+    throw new ApiError(404, "User not found");
   }
 
-  res.status(httpStatus.OK).json(data);
+if(authenticatedUserId !== userId){
+  throw new ApiError(403, "Forbidden");
+
+}
+  res.status(200).json(user);
 });
 
 
@@ -62,22 +68,22 @@ const getUserByEmailController = catchAsync(async (req, res) => {
     throw new ApiError(httpStatus.NOT_FOUND,"email not found");
   }
   res.json(data);
-
+  return data;
 });
 
 
 
-const CreateUserController = catchAsync(async (req,res) => {
+const createUserController = catchAsync(async (req,res) => {
   console.log(req.body)
   const data = await userService.createUser(req.body);
   console.log(data);
   console.log("getUser")
- 
   res.json(data);
+  return data;
 })
 
 
 
 module.exports = {
-  getUser, CreateUserController, getUserByEmailController
+  getUser, createUserController, getUserByEmailController
 };
