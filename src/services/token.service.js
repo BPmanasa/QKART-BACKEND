@@ -18,8 +18,8 @@ const { tokenTypes } = require("../config/tokens");
  */
 const generateToken = (userId, expires, type, secret = config.jwt.secret) => {
     try{
-      const Payload = {sub:userId,iat:Math.floor(Date.now()/1000),exp:expires,type,};
-      const token = jwt.sign(Payload, secret);
+      const payload = {sub:userId,iat:Math.floor(Date.now()/1000),exp:expires,type,};
+      const token = jwt.sign(payload, secret);
       console.log(token);
       return token;
     }

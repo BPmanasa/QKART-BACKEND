@@ -13,5 +13,11 @@ router.get("/:userId",auth, validate(userValidation.getUser), userController.get
 router.get("/:email",  userController.getUserByEmailController);
 
 router.post("/new", validate(userValidation.createUser), userController.createUserController);
+router.put(
+  "/:userId",
+  auth,
+  validate(userValidation.setAddress),
+  userController.setAddress
+);
 
 module.exports = router;

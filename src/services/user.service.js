@@ -56,24 +56,50 @@ const getUserByEmail =  async(email) => {
 
 async function createUser(userBody) {
   // Check if the email is already taken
-const { email} = userBody;
+const { email } = userBody;
 const emailTaken = await User.isEmailTaken(email);
+
 if(emailTaken){
   throw new ApiError(httpStatus.OK,'Email already taken');
 }
+
 const hashedPassword = await bcrypt.hash(userBody.password, 10);
 console.log(User);
 const user = await User.create({...userBody, password:hashedPassword})
 return user;
+
 }
 
 
 
 
+// TODO: CRIO_TASK_MODULE_CART - Implement getUserAddressById()
+/**
+ * Get subset of user's data by id
+ * - Should fetch from Mongo only the email and address fields for the user apart from the id
+ *
+ * @param {ObjectId} id
+ * @returns {Promise<User>}
+ */
+const getUserAddressById = async (id) => {
+const user = await User.findOne({_id:id},{email:1, address:1});
+return user;
 
- 
   
+};
+
+/**
+ * Set user's shipping address
+ * @param {String} email
+ * @returns {String}
+ */
+const setAddress = async (user, newAddress) => {
+  user.address = newAddress;
+  await user.save();
+
+  return user.address;
+};
 
 
-module.exports = {getUserById, createUser, getUserByEmail };
+module.exports = {getUserById,createUser, getUserByEmail ,getUserAddressById, setAddress};
 

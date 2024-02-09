@@ -2,7 +2,6 @@ const httpStatus = require("http-status");
 const userService = require("./user.service");
 const ApiError = require("../utils/ApiError");
 
-
 /**
  * Login with username and password
  * - Utilize userService method to fetch user object corresponding to the email provided
