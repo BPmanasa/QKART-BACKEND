@@ -1,5 +1,5 @@
 const httpStatus = require("http-status");
-const { Cart, Product, User } = require("../models");
+const { Cart, Product } = require("../models");
 const ApiError = require("../utils/ApiError");
 const config = require("../config/config");
 
@@ -17,16 +17,9 @@ const config = require("../config/config");
  * @throws {ApiError}
  */
 const getCartByUser = async (user) => {
-  // const cart = await Cart.findOne({user : user._id}).populate("cartItems.product");
-
-  // if(!cart){
-  //  throw new ApiError(httpStatus.NOT_FOUND, "User does not have a cart");
-  // }
-
-  // return cart;
-  const cart = await Cart.findOne({email:user.email})
-  if(!cart){
-    throw new ApiError(httpStatus.NOT_FOUND,"User does not have a cart")
+  const cart = await Cart.findOne({ email: user.email });
+  if (!cart) {
+    throw new ApiError(httpStatus.NOT_FOUND, "User does not have a cart");
   }
   return cart;
 };
@@ -55,80 +48,43 @@ const getCartByUser = async (user) => {
  * @returns {Promise<Cart>}
  * @throws {ApiError}
  */
-// const addProductToCart = async (user, productId, quantity) => {
-//   let cart = await Cart.findOne({email:user.email});
-//   if(!cart){
-//     try{
-//       cart = await Cart.create({
-//         email:user.email,
-//         cartItems: [],
-//         paymentOption:config.default_payment_option,
-//       });
-
-//     }
-//     catch(error){
-//       throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "User cart creation failed because user already have a cart");
-     
-//     }
-//   }
-  
-//   if(cart == null){
-//     throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "User does not have a cart");
-//   }
-
-
-//   let productIndex = -1;
-//   for(let i=0;i<cart.cartItems.length;i++){
-//     if(productId === cart.cartItems[i].product._id){
-//       productIndex = i;
-//     }
-//   }
-
-//   if(productIndex==-1){
-//     let product = await Product.findOne({_id:productId});
-//     if(product ===null){
-//       throw new ApiError(httpStatus.BAD_REQUEST, "Product doesn't exist in database")
-//     }
-//     cart.cartItems.push({product:product, quantity:quantity})
-
-//   }
-//   else{
-//     throw new ApiError(httpStatus.BAD_REQUEST, "Product already in cart. Use the cart sidebar to update or remove product from cart")
-//   }
-//   await cart.save();
-//   return cart;
-// };
-
 const addProductToCart = async (user, productId, quantity) => {
-  let cart = await Cart.findOne({email:user.email});
-
-  if (!cart){
-    try{
-       cart = await Cart.create({
-        email:user.email,
-        cartItems:[],
-        paymentOption:config.default_payment_option,
-        });
-        await cart.save();
-    }catch(e){
-      throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR,"User cart creation failed");
-    }
+ let cart=await Cart.findOne({email:user.email});
+ if(!cart){
+  try {
+    cart=await Cart.create({
+      email:user.email,
+      cartItems:[],
+      paymentOption:config.default_payment_option
+    })
+  } catch (error) {
+    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR,"User cart creation failed because user already have a cart")
   }
+ }
+ if(cart==null){
+  throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR,"User does not have a cart")
+ }
 
-if(cart.cartItems.some((item)=>item.product._id == productId))
-{
-  throw new ApiError(httpStatus.BAD_REQUEST,"Product already in cart. Use the cart sidebar to update or remove product from cart")
-}
+ //find the index of the cart item matching productId if any
+ let productIndex=-1;
+ for(let i=0;i<cart.cartItems.length;i++){
+    if(productId==cart.cartItems[i].product._id){
+      productIndex=i;
+    }
+ }
+  //if product not in cart, add to cart otherwise throw error
+ if(productIndex==-1){
+  let product=await Product.findOne({_id:productId})
+  if(product==null){
+    throw new ApiError(httpStatus.BAD_REQUEST,"Product doesn't exist in database")
+  }
+  cart.cartItems.push({product:product,quantity:quantity})
+ }else{
+  throw new ApiError(httpStatus.BAD_REQUEST,"Product already in cart. Use the sidebar to update or remove product from cart")
+ }
+ await cart.save();
+ return cart;
 
-const product = await Product.findOne({_id:productId})
-if(!product){
-  throw new ApiError(httpStatus.BAD_REQUEST,"product doesn't exist in the database")
-}
-
-cart.cartItems.push({ product,quantity})
-await cart.save();
-
-return cart;
 
 };
 
@@ -153,73 +109,34 @@ return cart;
  * @param {User} user
  * @param {string} productId
  * @param {number} quantity
- * @returns {Promise<Cart>}
+ * @returns {Promise<Cart>
  * @throws {ApiError}
  */
-// const updateProductInCart = async (user, productId, quantity) => {
-
-
-  const updateProductInCart = async (user, productId, quantity) => {
-  
-    const cart = await Cart.findOne({email:user.email});
-  
-    if (!cart){
-    
-        throw new ApiError(httpStatus.BAD_REQUEST,"User does not have a cart. Use POST to create cart and add a product");
-      
+const updateProductInCart = async (user, productId, quantity) => {
+  let cart=await Cart.findOne({email:user.email});
+  if(cart==null){
+    throw new ApiError(httpStatus.BAD_REQUEST,"User does not have a cart. Use POST to create cart and add a product.")
+  }
+  let product=await Product.findOne({_id:productId})
+  if(product==null){
+    throw new ApiError(httpStatus.BAD_REQUEST,"Product doesn't exist in database")
+  }
+//   //find the index of the cart item matching productId if any
+ let productIndex=-1;
+ for(let i=0;i<cart.cartItems.length;i++){
+    if(productId==cart.cartItems[i].product._id){
+      productIndex=i;
     }
-  
-  
-  //[ {P:{id},Q} , {P:{id},Q} , {P:{id},Q} , {P:{id},Q} ]
-  
-  const product = await Product.findOne({_id: productId});
-  
-  if(!product){
-    throw new ApiError(httpStatus.BAD_REQUEST,"Product doesn't exist in database");
-  }
-  
-  const productIndex = cart.cartItems.findIndex(item => item.product._id == productId);
-  
-   if(productIndex ===-1){
+ }
+ //if product not in cart, add to cart otherwise throw error
+ if(productIndex==-1){
     throw new ApiError(httpStatus.BAD_REQUEST,"Product not in cart")
-   }
-  
-   cart.cartItems[productIndex].quantity = quantity;
-  
-   await cart.save();
-   return cart;
-  }
-//  let cart = await Cart.findOne({email:user.email});
-
-//  if(cart==null){
-//   throw new ApiError(httpStatus.BAD_REQUEST, "User does not have a cart. Use POST to create and add a product");
-//  }
-
-//  let product = await Product.findOne({_id:productId});
-
-//  if(product==null){
-//   throw new ApiError(httpStatus.BAD_REQUEST, "Product doesn't exist in database");
-//  }
-
-//  let productIndex = -1;
-//  for(let i=0;i<cartItems.length;i++){
-//   if(productId == cart.cartItems[i].product._id){
-//     productIndex = i;
-//   }
-//  }
-
-//  if(productIndex == -1){
-//   throw new ApiError(httpStatus.BAD_REQUEST, "Product not in cart")
-//  }
-//  else{
-//   cart.cartItems[productIndex].quantity = quantity;
-//  }
-
-//  await cart.save();
-//  return cart;
-
-
-// };
+ }else{
+  cart.cartItems[productIndex].quantity=quantity
+ }
+ await cart.save();
+ return cart; 
+};
 
 /**
  * Deletes an already existing product in cart
@@ -238,51 +155,84 @@ return cart;
  * @param {string} productId
  * @throws {ApiError}
  */
-// const deleteProductFromCart = async (user, productId) => {
-// // Find the cart associated with the user
-// const cart = await Cart.findOne({ user: user._id });
-
-// // If the cart doesn't exist, throw an error
-// if (!cart) {
-//   throw new ApiError(httpStatus.BAD_REQUEST, "User does not have a cart");
-// }
-
-// // Find the index of the product in the cart items array
-// const index = cart.cartItems.findIndex(item => item.product.toString() === productId);
-
-// // If the product is not in the cart, throw an error
-// if (index === -1) {
-//   throw new ApiError(httpStatus.BAD_REQUEST, "Product not in cart");
-// }
-
-// // Remove the product from the cart
-// cart.cartItems = cart.cartItems.filter(item => item.product.toString() !== productId);
-
-// // Save the updated cart
-// await cart.save();
-// };
-
 const deleteProductFromCart = async (user, productId) => {
-  
-  const cart = await Cart.findOne({email:user.email});
-  if(!cart){
-   throw new ApiError(httpStatus.BAD_REQUEST,"User does not have a cart")
+  let cart = await Cart.findOne({ email: user.email });
+  if (cart == null) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "User does not have a cart");
   }
-  const productIndex = cart.cartItems.findIndex(item => item.product._id == productId);
- 
-  if(productIndex ===-1){
-   throw new ApiError(httpStatus.BAD_REQUEST,"Product not in cart")
-  }
- 
-  cart.cartItems.splice(productIndex,1)
-  await cart.save();
- 
- };
 
+  // Find the index of the cart item matching the input productId
+  let productIndex = -1;
+  for (let i = 0; i < cart.cartItems.length; i++) {
+    if (productId == cart.cartItems[i].product._id) {
+      productIndex = i;
+    }
+  }
+
+  // If product not in cart, throw error. Otherwise, delete from cart.
+  if (productIndex == -1) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Product not in cart.");
+  } else {
+    cart.cartItems.splice(productIndex, 1);
+  }
+
+  await cart.save();
+  return cart;
+};
+
+
+
+// TODO: CRIO_TASK_MODULE_TEST - Implement checkout function
+/**
+ * Checkout a users cart.
+ * On success, users cart must have no products.
+ *
+ * @param {User} user
+ * @returns {Promise}
+ * @throws {ApiError} when cart is invalid
+ */
+const checkout = async (user) => {
+  let cart = await Cart.findOne({ email: user.email }); 
+
+  if (!cart) {
+    throw new ApiError(httpStatus.NOT_FOUND, "User does not have a cart");
+  }
+  if (cart.cartItems.length == 0){
+    throw new ApiError(httpStatus.BAD_REQUEST, "Cart does not have any products");
+  }
+
+  if (!(await user.hasSetNonDefaultAddress())){   
+    throw new ApiError(400, "Address is not set");
+  }
+
+  let cartTotal = 0;
+  let cartItems = cart.cartItems;
+
+  for (let i=0; i<cartItems.length; i++){
+    let quantity = cartItems[i].quantity;
+    let cost = cartItems[i].product.cost;
+
+    cartTotal += (quantity*cost);
+    if (user.walletMoney < cartTotal){
+      throw new ApiError(httpStatus.BAD_REQUEST, "Insufficient Wallet Balance");
+    }
+      
+    // updating the wallet money after checkout
+    let walletBalance = (user.walletMoney-cartTotal);
+    user.walletMoney = walletBalance;
+    await user.save();
+
+    //Removing all the cart items.
+    cart.cartItems = [];
+    await cart.save();
+    return user;
+  }
+};
 
 module.exports = {
   getCartByUser,
   addProductToCart,
   updateProductInCart,
   deleteProductFromCart,
-};
+  checkout
+}

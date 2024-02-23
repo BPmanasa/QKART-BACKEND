@@ -63,6 +63,9 @@ userSchema.statics.isEmailTaken = async function (email) {
 
 };
 
+userSchema.methods.hasSetNonDefaultAddress = async function () {
+  return this.address !== config.default_address;
+};
 
 
 // TODO: CRIO_TASK_MODULE_UNDERSTANDING_BASICS

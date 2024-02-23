@@ -125,10 +125,8 @@ const setAddress = catchAsync(async (req, res) => {
 });
 
 module.exports = {
-  getUser, setAddress, createUserController, getUserByEmailController
-}
-
-// module.exports = {
-//   getUser,
-//   setAddress,
-// };
+  getUserByEmailController,
+  createUserController,
+  getUser,
+  setAddress,
+};
