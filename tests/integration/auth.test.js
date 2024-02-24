@@ -196,6 +196,11 @@ describe("Auth routes", () => {
         .send(loginCredentials);
 
       expect(res.status).toEqual(httpStatus.UNAUTHORIZED);
+
+      expect(res.body).toEqual({
+        code: httpStatus.UNAUTHORIZED,
+        message: expect.any(String),
+      });
     });
 
     test("should return 400 error if email field isn't present", async () => {
